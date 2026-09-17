@@ -1,23 +1,17 @@
-import type { Metadata } from "next";
-import "./global.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import Providers from './providers';
+import './global.css';
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-export const metadata: Metadata = {
-  title: "SwiftPay",
-  description: "Privacy-focused stablecoin payments on Solana",
+export const metadata = {
+  title: 'SwiftPay',
+  description: 'Send and receive USDC privately on Solana.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>{children}</body>
+    <html lang="en">
+      <body className="bg-background text-foreground antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
