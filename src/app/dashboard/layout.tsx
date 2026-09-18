@@ -2,7 +2,7 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useWalletAddress } from '@/hooks/use-wallet-address';
 
@@ -11,15 +11,27 @@ function truncate(addr: string) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { ready, authenticated, logout } = usePrivy();
+  const { ready, authenticated, logout, user } = usePrivy();
   const { address } = useWalletAddress();
   const router = useRouter();
+  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [hasProfile, setHasProfile] = useState(true);
 
   useEffect(() => {
-    if (ready && !authenticated) router.push('/');
-  }, [ready, authenticated, router]);
+    if (ready && !authenticated) {
+      router.push('/');
+      return;
+    }
 
-  if (!ready || !authenticated) return null;
+    if (ready && authenticated && user?.id) {
+      fetch(`/api/users/profile?privy_user_id=${encodeURIComponent(user.id)}`).then((res) => {
+        setHasProfile(res.ok);
+        setCheckingProfile(false);
+      });
+    }
+  }, [ready, authenticated, user, router]);
+
+  if (!ready || !authenticated || checkingProfile) return null;
 
   return (
     <div className="flex min-h-screen">
@@ -40,7 +52,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Button variant="ghost" size="sm" onClick={logout}>Log out</Button>
         </div>
       </aside>
-      <main className="flex-1 p-10">{children}</main>
+      <main className="flex-1 p-10">
+        {!hasProfile && (
+          <div className="mb-6 flex items-center justify-between rounded-md border bg-muted/40 px-4 py-3">
+            <p className="text-sm">You haven't set up a username yet.</p>
+            <Button size="sm" onClick={() => router.push('/onboarding')}>
+              Set up profile
+            </Button>
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }
