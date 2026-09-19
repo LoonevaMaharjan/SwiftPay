@@ -37,23 +37,22 @@ export default function OnboardingPage() {
     e.preventDefault()
 
     if (!walletAddress) {
-      setError('Still loading your account — please wait a moment and try again')
+      setError('Still loading your wallet — please wait a moment and try again')
       return
     }
 
     setSubmitting(true)
     setError('')
 
-    const accessToken = await getAccessToken()
-    if (!accessToken) {
-      setError('Your session expired. Please sign in again.')
-      setSubmitting(false)
-      return
-    }
+    const token = await getAccessToken()
+    console.log('DEBUG TOKEN:', token)
 
     const res = await fetch('/api/users/create', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ username, wallet_address: walletAddress }),
     })
 
