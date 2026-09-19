@@ -6,23 +6,27 @@ import { getUsdcBalance } from '@/lib/solana';
 export function useUsdcBalance(address: string | null) {
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-// src/hooks/use-usdc-balance.ts
-const refresh = useCallback(async () => {
-  if (!address) {
-    setLoading(false);   // ← was missing, caused infinite skeleton
-    return;
-  }
-  setLoading(true);
-  try {
-    const bal = await getUsdcBalance(address);
-    setBalance(bal);
-  } catch (err) {
-    console.error('Failed to fetch USDC balance', err);
-  } finally {
-    setLoading(false);
-  }
-}, [address]);
+  const refresh = useCallback(async () => {
+    if (!address) {
+      setBalance(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const bal = await getUsdcBalance(address);
+      setBalance(bal);
+    } catch (err) {
+      console.error('Failed to fetch USDC balance', err);
+      setError('Couldn’t load your USDC balance. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [address]);
 
   useEffect(() => {
     refresh();
@@ -30,5 +34,5 @@ const refresh = useCallback(async () => {
     return () => clearInterval(interval);
   }, [refresh]);
 
-  return { balance, loading, refresh };
+  return { balance, loading, error, refresh };
 }

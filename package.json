@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@privy-io/node": "^0.34.0",
     "@privy-io/react-auth": "^3.43.0",
     "@solana-program/memo": "0.10.0",
     "@solana/spl-token": "^0.4.15",

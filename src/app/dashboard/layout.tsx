@@ -11,7 +11,7 @@ function truncate(addr: string) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { ready, authenticated, logout, user } = usePrivy();
+  const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { address } = useWalletAddress();
   const router = useRouter();
   const [checkingProfile, setCheckingProfile] = useState(true);
@@ -23,13 +23,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
-    if (ready && authenticated && user?.id) {
-      fetch(`/api/users/profile?privy_user_id=${encodeURIComponent(user.id)}`).then((res) => {
-        setHasProfile(res.ok);
-        setCheckingProfile(false);
-      });
+    if (ready && authenticated) {
+      getAccessToken().then((token) => fetch('/api/profile', { headers: token ? { Authorization: `Bearer ${token}` } : {} })).then((res) => {
+        setHasProfile(res.ok); setCheckingProfile(false);
+      }).catch(() => { setHasProfile(false); setCheckingProfile(false); });
     }
-  }, [ready, authenticated, user, router]);
+  }, [ready, authenticated, getAccessToken, router]);
 
   if (!ready || !authenticated || checkingProfile) return null;
 

@@ -13,7 +13,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
-  const { user, ready: privyReady } = usePrivy()
+  const { ready: privyReady, getAccessToken } = usePrivy()
   const { address: walletAddress, ready: walletReady } = useWalletAddress()
 
   async function checkUsername(value: string) {
@@ -36,7 +36,7 @@ export default function OnboardingPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!user?.id || !walletAddress) {
+    if (!walletAddress) {
       setError('Still loading your account — please wait a moment and try again')
       return
     }
@@ -44,14 +44,17 @@ export default function OnboardingPage() {
     setSubmitting(true)
     setError('')
 
-    const privy_user_id = user.id
-    const wallet_address = walletAddress
-    const email = user.email?.address ?? null
+    const accessToken = await getAccessToken()
+    if (!accessToken) {
+      setError('Your session expired. Please sign in again.')
+      setSubmitting(false)
+      return
+    }
 
     const res = await fetch('/api/users/create', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ privy_user_id, username, email, wallet_address }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ username, wallet_address: walletAddress }),
     })
 
     const data = await res.json()

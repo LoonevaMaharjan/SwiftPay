@@ -10,16 +10,18 @@ type UserProfile = {
 }
 
 export default function ProfilePage() {
-  const { user, ready } = usePrivy()
+  const { ready, getAccessToken } = usePrivy()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!ready || !user?.id) return
+    if (!ready) return
 
     async function fetchProfile() {
-      const res = await fetch(`/api/users/profile?privy_user_id=${encodeURIComponent(user!.id)}`)
+      const accessToken = await getAccessToken()
+      if (!accessToken) { setLoading(false); setError('Your session expired. Please sign in again.'); return }
+      const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${accessToken}` } })
       const data = await res.json()
       setLoading(false)
 
@@ -32,7 +34,7 @@ export default function ProfilePage() {
     }
 
     fetchProfile()
-  }, [ready, user])
+  }, [ready, getAccessToken])
 
   if (!ready || loading) return <p className="text-center mt-20">Loading...</p>
   if (error) return <p className="text-center mt-20 text-red-600">{error}</p>
