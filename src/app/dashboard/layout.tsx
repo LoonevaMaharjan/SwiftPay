@@ -21,9 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (ready && !authenticated) {
       router.push('/');
-      return;
     }
-
   }, [ready, authenticated, router]);
 
   if (!ready || !authenticated) return null;

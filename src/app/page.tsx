@@ -10,7 +10,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (ready && authenticated) router.push('/dashboard');
+    if (ready && authenticated) router.replace('/dashboard');
   }, [ready, authenticated, router]);
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, ChevronLeft, ExternalLink, LoaderCircle, Send, ShieldCheck } from 'lucide-react';
 import { PublicKey } from '@solana/web3.js';
 import { usePrivy } from '@privy-io/react-auth';
@@ -24,11 +25,17 @@ export default function SendPage() {
   const { getAccessToken } = usePrivy();
   const { balance, loading: balanceLoading, error: balanceError, refresh } = useUsdcBalance(address);
   const { send, state, signature, error: sendError, reset } = useSendUsdc();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('details');
   const [recipientInput, setRecipientInput] = useState('');
   const [recipient, setRecipient] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const recipient = searchParams.get('recipient');
+    if (recipient) setRecipientInput(recipient);
+  }, [searchParams]);
 
   const rawAmount = useMemo(() => toRawAmount(amount), [amount]);
   const submitting = state === 'signing' || state === 'confirming';

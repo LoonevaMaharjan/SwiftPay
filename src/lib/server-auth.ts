@@ -16,7 +16,10 @@ export async function requirePrivyUser(request: NextRequest) {
   if (!token) throw new Error('Sign in to continue.');
   try {
     return await client().utils().auth().verifyAccessToken(token);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && /invalid app id or app secret/i.test(error.message)) {
+      throw new Error('Server authentication is misconfigured. Check that PRIVY_APP_SECRET belongs to NEXT_PUBLIC_PRIVY_APP_ID.');
+    }
     throw new Error('Your session has expired. Please sign in again.');
   }
 }
@@ -39,6 +42,6 @@ export async function verifiedSolanaWallet(request: NextRequest, walletAddress: 
 
 export function apiError(error: unknown, fallback = 'Request failed.') {
   const message = error instanceof Error ? error.message : fallback;
-  const status = /sign in|session has expired/i.test(message) ? 401 : /not configured/i.test(message) ? 503 : 400;
+  const status = /sign in|session has expired/i.test(message) ? 401 : /not configured|misconfigured|invalid app id or app secret/i.test(message) ? 503 : 400;
   return Response.json({ error: message }, { status });
 }
