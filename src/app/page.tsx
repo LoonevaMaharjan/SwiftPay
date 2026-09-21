@@ -14,8 +14,8 @@ export default function LandingPage() {
   }, [ready, authenticated, router]);
 
   return (
-    <main className="flex min-h-screen">
-      <div className="flex w-full max-w-xl flex-col justify-center gap-6 px-16">
+    <main className="flex h-full min-h-0 overflow-y-auto">
+      <div className="flex w-full flex-col justify-center gap-6 px-8 sm:px-16">
         <span className="text-sm font-medium text-muted-foreground">SwiftPay</span>
         <h1 className="text-5xl font-semibold tracking-tight">
           Send USDC privately.
@@ -30,7 +30,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="hidden flex-1 items-center justify-center border-l bg-muted/30 lg:flex">
+      <div className="hidden flex-1 items-center justify-center border-l bg-muted/30">
         <div className="rounded-xl border bg-background p-8 shadow-sm">
           <p className="text-sm text-muted-foreground">Balance</p>
           <p className="mt-2 text-3xl font-semibold">1,240.00 USDC</p>

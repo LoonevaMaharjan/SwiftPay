@@ -5,7 +5,7 @@ import { BalanceCard } from '@/components/balance-card';
 
 export default function DashboardPage() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       <BalanceCard />
       <Card><CardHeader><CardTitle>Send</CardTitle></CardHeader><CardContent><p className="mb-4 text-sm text-muted-foreground">Send USDC on Solana devnet.</p><Link className={buttonVariants()} href="/dashboard/send">Send USDC</Link></CardContent></Card>
       <Card><CardHeader><CardTitle>Receive</CardTitle></CardHeader><CardContent>Member 2 builds this</CardContent></Card>

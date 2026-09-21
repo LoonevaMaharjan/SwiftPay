@@ -21,8 +21,14 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
-      <body className="bg-background text-foreground antialiased">
-        <Providers>{children}</Providers>
+      <body className="h-dvh overflow-hidden bg-shell-background text-foreground antialiased">
+        <Providers>
+          <div className="flex h-full items-center justify-center bg-shell-background p-4 sm:p-8">
+            <div className="h-[calc(100dvh-2rem)] w-full max-w-lg max-h-[48rem] overflow-y-auto rounded-xl border border-border bg-card shadow-md sm:h-[calc(100dvh-4rem)]">
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   );
