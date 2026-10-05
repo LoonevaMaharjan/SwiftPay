@@ -7,16 +7,35 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { ready, authenticated, logout } = usePrivy();
+  const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
   useEffect(() => {
     if (ready && !authenticated) {
       router.push('/');
+      return;
     }
-  }, [ready, authenticated, router]);
+
+    if (ready && authenticated) {
+      async function checkProfile() {
+        const token = await getAccessToken();
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          setCheckingProfile(false);
+        } else {
+          router.push('/onboarding');
+        }
+      }
+
+      checkProfile();
+    }
+  }, [ready, authenticated, router, getAccessToken]);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -33,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [isMenuOpen]);
 
-  if (!ready || !authenticated) return null;
+  if (!ready || !authenticated || checkingProfile) return null;
 
   const navigation = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },

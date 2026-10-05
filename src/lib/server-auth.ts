@@ -6,9 +6,15 @@ type AppUser = { id: string; privy_user_id: string; username: string; email: str
 
 function client() {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-  const appSecret = process.env.PRIVY_APP_SECRET;
+  const appSecret = process.env.PRIVY_APP_SECRET; 
+  const configuredJwtVerificationKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim().replace(/\\n/g, '\n');
+  // A complete SPKI key overrides Privy's JWKS endpoint. Empty values and
+  // copied placeholders fall back to the SDK's built-in JWKS verification.
+  const jwtVerificationKey = configuredJwtVerificationKey?.startsWith('-----BEGIN PUBLIC KEY-----') && configuredJwtVerificationKey.includes('-----END PUBLIC KEY-----')
+    ? configuredJwtVerificationKey
+    : undefined;
   if (!appId || !appSecret) throw new Error('Server authentication is not configured. Set PRIVY_APP_SECRET.');
-  return new PrivyClient({ appId, appSecret });
+  return new PrivyClient({ appId, appSecret, jwtVerificationKey });
 }
 
 export async function requirePrivyUser(request: NextRequest) {
@@ -17,6 +23,7 @@ export async function requirePrivyUser(request: NextRequest) {
   try {
     return await client().utils().auth().verifyAccessToken(token);
   } catch (error) {
+    console.error('REAL AUTH ERROR:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     if (error instanceof Error && /invalid app id or app secret/i.test(error.message)) {
       throw new Error('Server authentication is misconfigured. Check that PRIVY_APP_SECRET belongs to NEXT_PUBLIC_PRIVY_APP_ID.');
     }
