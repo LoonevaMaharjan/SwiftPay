@@ -1,5 +1,5 @@
-import { clusterApiUrl, Connection, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
-import { createAssociatedTokenAccountIdempotentInstruction, createTransferCheckedInstruction, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } from '@solana/spl-token';
+import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } from '@solana/spl-token';
 
 export const USDC_MINT = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
 
@@ -7,11 +7,29 @@ export function getConnection() {
   return new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('devnet'), 'confirmed');
 }
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs = 10_000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('The Solana network took too long to respond.')), timeoutMs)),
-  ]);
+function withTimeout<T>(promise: Promise<T>, timeoutMs = 15_000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('The Solana network took too long to respond.')), timeoutMs);
+    promise.then(
+      (value) => { clearTimeout(timeout); resolve(value); },
+      (error) => { clearTimeout(timeout); reject(error); },
+    );
+  });
+}
+
+async function withRpcRetry<T>(request: () => Promise<T>): Promise<T> {
+  try {
+    return await withTimeout(request());
+  } catch (firstError) {
+    // Public devnet RPCs occasionally drop browser requests. Retry once after
+    // a short pause so transient fetch failures don't appear as a zero balance.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    try {
+      return await withTimeout(request());
+    } catch {
+      throw firstError;
+    }
+  }
 }
 
 export async function getUsdcBalance(walletAddress: string): Promise<number> {
@@ -20,7 +38,7 @@ export async function getUsdcBalance(walletAddress: string): Promise<number> {
   const ata = await getAssociatedTokenAddress(USDC_MINT, owner);
 
   try {
-    const account = await withTimeout(getAccount(connection, ata));
+    const account = await withRpcRetry(() => getAccount(connection, ata));
     return Number(account.amount) / 1_000_000;
   } catch (err) {
     if (err instanceof TokenAccountNotFoundError) {
@@ -30,22 +48,7 @@ export async function getUsdcBalance(walletAddress: string): Promise<number> {
   }
 }
 
-export async function buildUsdcTransfer({ sender, recipient, amount }: { sender: string; recipient: string; amount: bigint }) {
-  const connection = getConnection();
-  const owner = new PublicKey(sender);
-  const destination = new PublicKey(recipient);
-  const sourceAta = await getAssociatedTokenAddress(USDC_MINT, owner);
-  const destinationAta = await getAssociatedTokenAddress(USDC_MINT, destination);
-  const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
-
-  const message = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: [
-      createAssociatedTokenAccountIdempotentInstruction(owner, destinationAta, destination, USDC_MINT),
-      createTransferCheckedInstruction(sourceAta, USDC_MINT, destinationAta, owner, amount, 6),
-    ],
-  }).compileToV0Message();
-
-  return { transaction: new VersionedTransaction(message), blockhash, lastValidBlockHeight };
+export async function getSolBalance(walletAddress: string): Promise<number> {
+  const lamports = await withRpcRetry(() => getConnection().getBalance(new PublicKey(walletAddress), 'confirmed'));
+  return lamports / 1_000_000_000;
 }

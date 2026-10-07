@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PublicKey } from '@solana/web3.js';
 import { apiError, requireAppUser } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { registeredPrivateWallet } from '@/lib/helius-server';
+
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +18,8 @@ export async function GET(request: NextRequest) {
     if (error) throw new Error('Couldn’t resolve that recipient.');
     if (!data) return NextResponse.json({ error: 'No SwiftPay user matched that recipient.' }, { status: 404 });
     new PublicKey(data.wallet_address);
-    return NextResponse.json({ recipient: { id: data.id, username: data.username, walletAddress: data.wallet_address } });
+    const privateWalletRegistered = await registeredPrivateWallet(data.wallet_address);
+    if (!privateWalletRegistered) return NextResponse.json({ error: 'This recipient has a SwiftPay profile but has not activated private receiving yet. Ask them to sign in, open Receive, and finish the one-time wallet setup. They may need a small amount of Devnet SOL for the setup transaction.' }, { status: 409 });
+    return NextResponse.json({ recipient: { id: data.id, username: data.username, walletAddress: data.wallet_address, privateWalletRegistered } });
   } catch (error) { return apiError(error); }
 }

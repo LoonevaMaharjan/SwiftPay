@@ -1,31 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { apiError, requireAppUser } from '@/lib/server-auth';
+import { verifyPrivatePayment } from '@/lib/helius-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getConnection, USDC_MINT } from '@/lib/solana';
+
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     const sender = await requireAppUser(request);
     const { payment_id, signature } = await request.json() as { payment_id?: string; signature?: string };
     if (!payment_id || !signature) return NextResponse.json({ error: 'Payment and transaction signature are required.' }, { status: 400 });
-    const { data: payment, error } = await supabaseAdmin.from('payments').select('*').eq('id', payment_id).eq('sender_user_id', sender.id).maybeSingle();
+    const { data: payment, error } = await supabaseAdmin.from('payments')
+      .select('id, receiver_user_id, privacy_status, transaction_signature, status').eq('id', payment_id).eq('sender_user_id', sender.id).maybeSingle();
     if (error || !payment) return NextResponse.json({ error: 'Payment not found.' }, { status: 404 });
-    const { data: receiver } = await supabaseAdmin.from('users').select('wallet_address').eq('id', payment.receiver_user_id).single();
-    if (!receiver) throw new Error('Payment recipient is unavailable.');
-    const transaction = await getConnection().getParsedTransaction(signature, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
-    if (!transaction || transaction.meta?.err) throw new Error('This transaction is not confirmed.');
-    const destinationAta = (await getAssociatedTokenAddress(USDC_MINT, new PublicKey(receiver.wallet_address))).toBase58();
-    const expectedAmount = BigInt(String(payment.amount).replace('.', '').padEnd(String(payment.amount).split('.')[0].length + 6, '0')).toString();
-    const validTransfer = transaction.transaction.message.instructions.some((instruction) => {
-      if (!('parsed' in instruction) || !instruction.parsed || typeof instruction.parsed !== 'object') return false;
-      const parsed = instruction.parsed as { type?: string; info?: Record<string, string> };
-      return ['transfer', 'transferChecked'].includes(parsed.type ?? '') && parsed.info?.mint === USDC_MINT.toBase58() && parsed.info?.authority === sender.wallet_address && parsed.info?.destination === destinationAta && parsed.info?.amount === expectedAmount;
-    });
-    if (!validTransfer) throw new Error('Transaction does not match this USDC payment.');
-    const { error: updateError } = await supabaseAdmin.from('payments').update({ status: 'confirmed', transaction_signature: signature, confirmed_at: new Date().toISOString() }).eq('id', payment.id);
-    if (updateError) throw new Error('Couldn’t record the confirmed payment.');
-    return NextResponse.json({ status: 'confirmed' });
+    if (payment.privacy_status !== 'private') return NextResponse.json({ error: 'SwiftPay only verifies private payments.' }, { status: 400 });
+    if (payment.transaction_signature && payment.transaction_signature !== signature) return NextResponse.json({ error: 'This payment already has a different transaction signature.' }, { status: 409 });
+    if (payment.status === 'confirmed') return NextResponse.json({ status: 'confirmed' });
+    if (!['created', 'submitted', 'processing'].includes(payment.status)) return NextResponse.json({ error: 'This payment cannot be verified in its current state.' }, { status: 409 });
+    if (!(await verifyPrivatePayment(signature, sender.wallet_address)).confirmed) return NextResponse.json({ error: 'Helius has not indexed this private payment yet.' }, { status: 409 });
+    let update = supabaseAdmin.from('payments').update({ status: 'processing', transaction_signature: signature }).eq('id', payment.id).eq('sender_user_id', sender.id);
+    update = payment.transaction_signature ? update.eq('transaction_signature', signature) : update.is('transaction_signature', null);
+    const { error: updateError } = await update.in('status', ['created', 'submitted', 'processing']);
+    if (updateError) throw new Error('The private transfer was confirmed, but SwiftPay could not update history.');
+    return NextResponse.json({ status: 'processing' });
   } catch (error) { return apiError(error); }
 }

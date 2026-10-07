@@ -1,10 +1,13 @@
 'use client';
 
 import { usePrivy } from '@privy-io/react-auth';
-import { Download, History, LayoutDashboard, LogOut, Menu, Send, UserRound, X } from 'lucide-react';
+import { Download, History, LayoutDashboard, LogOut, Menu, Send, UserRound, Wallet, X } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { PrivateWalletProvider } from '@/providers/private-wallet-provider';
+import { PaymentReconciler } from '@/components/payment-reconciler';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
@@ -57,12 +60,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigation = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/send', label: 'Send', icon: Send },
+    { href: '/dashboard/balance', label: 'Balance', icon: Wallet },
     { href: '/dashboard/receive', label: 'Receive', icon: Download },
     { href: '/dashboard/history', label: 'History', icon: History },
     { href: '/dashboard/profile', label: 'Profile', icon: UserRound, exact: true },
   ];
 
   return (
+    <PrivateWalletProvider>
+    <PaymentReconciler />
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-background">
       <header className="relative z-20 flex shrink-0 items-center justify-between border-b bg-card px-4 py-3">
         <span className="text-lg font-bold tracking-tight">SwiftPay</span>
@@ -98,7 +104,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 const isActive = exact ? pathname === href : pathname.startsWith(href);
 
                 return (
-                  <a
+                  <Link
                     key={href}
                     className={`flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isActive ? 'bg-accent text-accent-foreground italic' : 'hover:bg-muted'}`}
                     href={href}
@@ -107,7 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   >
                     <Icon className="size-4 shrink-0" aria-hidden="true" />
                     {label}
-                  </a>
+                  </Link>
                 );
               })}
             </div>
@@ -129,5 +135,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
       <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">{children}</main>
     </div>
+    </PrivateWalletProvider>
   );
 }
