@@ -65,36 +65,49 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
   const clientRef = useRef<ZolanaClient | null>(null);
   const walletRef = useRef<Wallet | null>(null);
   const keysRef = useRef<LocalKeys | null>(null);
+  const initializationRef = useRef<Promise<void> | null>(null);
 
-  const initialize = useCallback(async () => {
-    if (keysRef.current && walletRef.current && clientRef.current) return;
+  const initialize = useCallback((): Promise<void> => {
+    if (keysRef.current && walletRef.current && clientRef.current) return Promise.resolve();
+    if (initializationRef.current) return initializationRef.current;
     setState('loading'); setError(null);
-    try {
-      if (!ownerWallet) throw new Error('Your Privy Solana wallet is not ready yet.');
-      if (!RPC) throw new Error('Add NEXT_PUBLIC_HELIUS_API_KEY to enable Helius Privacy on Devnet.');
-      const client = await createZolanaClient({
-        solanaRpcUrl: RPC,
-        indexerUrl: process.env.NEXT_PUBLIC_HELIUS_INDEXER_URL || 'https://d2xah7tnhdhcom.cloudfront.net',
-        proverUrl: process.env.NEXT_PUBLIC_HELIUS_PROVER_URL || 'https://d21ni15goiip6l.cloudfront.net',
-      });
-      const ownerAddress = address(ownerWallet.address);
-      const publicKeyBytes = new PublicKey(ownerWallet.address).toBytes() as Bytes32;
-      const { signature: derivationSeed } = await signMessage({ message: ed25519DerivationMessage(publicKeyBytes), wallet: ownerWallet });
-      const keys = LocalKeys.fromDerivationSeed({ solanaPublicKey: ownerAddress, derivationSeed }, client.proofService);
-      const privateWallet = new Wallet({ identity: keys.address() });
-      clientRef.current = client; walletRef.current = privateWallet; keysRef.current = keys;
-      await syncWallet({ client, wallet: privateWallet, keys });
-      const isRegistered = await isWalletRegistered({ rpc: client, owner: address(ownerWallet.address) });
-      setRegistered(isRegistered);
-      setPrivateUsdc(Number(getPrivateUsdcAmount(privateWallet)) / 1_000_000);
-      setPrivateTransactions(getPrivateTransactions(privateWallet));
-      setState('ready');
-    } catch (cause) {
-      keysRef.current?.destroy(); keysRef.current = null; walletRef.current = null; clientRef.current = null;
-      setState('error');
-      setError(cause instanceof Error ? cause.message : 'Could not open your private wallet.');
-      throw cause;
-    }
+    const task = (async () => {
+      try {
+        if (!ownerWallet) throw new Error('Your Privy Solana wallet is not ready yet.');
+        if (!RPC) throw new Error('Add NEXT_PUBLIC_HELIUS_API_KEY to enable Helius Privacy on Devnet.');
+        const client = await createZolanaClient({
+          solanaRpcUrl: RPC,
+          indexerUrl: process.env.NEXT_PUBLIC_HELIUS_INDEXER_URL || 'https://d2xah7tnhdhcom.cloudfront.net',
+          proverUrl: process.env.NEXT_PUBLIC_HELIUS_PROVER_URL || 'https://d21ni15goiip6l.cloudfront.net',
+        });
+        const ownerAddress = address(ownerWallet.address);
+        const publicKeyBytes = new PublicKey(ownerWallet.address).toBytes() as Bytes32;
+        const { signature: derivationSeed } = await signMessage({
+          message: ed25519DerivationMessage(publicKeyBytes),
+          wallet: ownerWallet,
+          options: { uiOptions: { showWalletUIs: false } },
+        });
+        const keys = LocalKeys.fromDerivationSeed({ solanaPublicKey: ownerAddress, derivationSeed }, client.proofService);
+        const privateWallet = new Wallet({ identity: keys.address() });
+        clientRef.current = client; walletRef.current = privateWallet; keysRef.current = keys;
+        await syncWallet({ client, wallet: privateWallet, keys });
+        const isRegistered = await isWalletRegistered({ rpc: client, owner: address(ownerWallet.address) });
+        setRegistered(isRegistered);
+        setPrivateUsdc(Number(getPrivateUsdcAmount(privateWallet)) / 1_000_000);
+        setPrivateTransactions(getPrivateTransactions(privateWallet));
+        setState('ready');
+      } catch (cause) {
+        keysRef.current?.destroy(); keysRef.current = null; walletRef.current = null; clientRef.current = null;
+        setState('error');
+        setError(cause instanceof Error ? cause.message : 'Could not open your private wallet.');
+        throw cause;
+      }
+    })();
+    initializationRef.current = task;
+    void task.finally(() => {
+      if (initializationRef.current === task) initializationRef.current = null;
+    }).catch(() => undefined);
+    return task;
   }, [ownerWallet, signMessage]);
 
   const submit = useCallback(async (transaction: Transaction) => {
@@ -154,7 +167,7 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
       amount,
     });
     const txSignature = await submit(transaction);
-    let slot: number | undefined;
+    let slot: bigint | undefined;
     try {
       slot = await clientRef.current.confirmTransaction(toKitSignature(txSignature));
     } catch {

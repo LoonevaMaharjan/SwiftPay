@@ -27,7 +27,15 @@ export async function POST(request: NextRequest) {
     const { data: receiver } = await supabaseAdmin.from('users').select('id').eq('id', receiver_user_id).maybeSingle();
     if (!receiver || receiver.id === sender.id) return NextResponse.json({ error: 'Choose another SwiftPay recipient.' }, { status: 400 });
     const { data, error } = await supabaseAdmin.from('payments').insert({ sender_user_id: sender.id, receiver_user_id, amount, token: 'USDC', status: 'created', privacy_status, idempotency_key, network: 'devnet' }).select('id, status').single();
-    if (error) throw new Error('Payments migration is required before creating payment intents.');
+    if (error) {
+      console.error('Payment intent insert failed:', { code: error.code, message: error.message });
+      const migrationRequired = ['42P01', '42703', 'PGRST204', 'PGRST205', '23514'].includes(error.code ?? '');
+      return NextResponse.json({
+        error: migrationRequired
+          ? 'The Supabase payments schema is outdated. Apply supabase/migrations/20260919_secure_payments.sql in the Supabase SQL Editor, then retry.'
+          : 'Could not create the payment intent. Check the server log for the Supabase error.',
+      }, { status: migrationRequired ? 503 : 500 });
+    }
     return NextResponse.json({ payment: data }, { status: 201 });
   } catch (error) { return apiError(error); }
 }
