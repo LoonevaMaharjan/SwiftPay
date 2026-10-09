@@ -1,7 +1,7 @@
 import { DM_Mono, DM_Sans } from 'next/font/google';
+import { AppShell } from '@/components/app-shell';
 import Providers from './providers';
 import './global.css';
-
 const sans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
@@ -21,13 +21,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
-      <body className="h-dvh overflow-hidden bg-shell-background text-foreground antialiased">
+      <body className="min-h-dvh bg-shell-background text-foreground antialiased selection:bg-[#CFEBDD] selection:text-[#143C2F]">
         <Providers>
-          <div className="flex h-full items-center justify-center bg-shell-background p-4 sm:p-8">
-            <div className="h-[calc(100dvh-2rem)] w-full max-w-lg max-h-[48rem] overflow-y-auto rounded-xl border border-border bg-card shadow-md sm:h-[calc(100dvh-4rem)]">
-              {children}
-            </div>
-          </div>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>
