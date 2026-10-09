@@ -45,9 +45,11 @@ type PrivateContextValue = {
 const PrivateWalletContext = createContext<PrivateContextValue | null>(null);
 const USDC_ADDRESS = address(USDC_MINT.toBase58());
 const RPC = process.env.NEXT_PUBLIC_HELIUS_RPC_URL
-  ?? (process.env.NEXT_PUBLIC_HELIUS_API_KEY
+  || (process.env.NEXT_PUBLIC_HELIUS_API_KEY
     ? `https://devnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`
-    : '');
+    : process.env.NEXT_PUBLIC_SOLANA_RPC_URL?.includes('helius-rpc.com')
+      ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      : '');
 
 function getPrivateUsdcAmount(wallet: Wallet) {
   return getPrivateTokenBalances(wallet).find((balance) => balance.mint === USDC_ADDRESS)?.amount ?? BigInt(0);
@@ -112,6 +114,23 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
 
   const submit = useCallback(async (transaction: Transaction) => {
     if (!ownerWallet) throw new Error('Your Privy wallet is not connected.');
+
+    // Pre-flight check: ensure the wallet has SOL to pay Solana network transaction fees
+    try {
+      const conn = getConnection();
+      const lamports = await conn.getBalance(new PublicKey(ownerWallet.address), 'confirmed');
+      if (lamports < 2_000_000) {
+        throw new Error(
+          `Your wallet needs Devnet SOL to pay Solana transaction fees. Balance: ${(lamports / 1e9).toFixed(4)} SOL. Please claim free Devnet SOL from https://faucet.solana.com to continue.`
+        );
+      }
+    } catch (checkErr) {
+      if (checkErr instanceof Error && checkErr.message.includes('needs Devnet SOL')) {
+        throw checkErr;
+      }
+      // If RPC balance check fails transiently, continue to let Privy attempt submission
+    }
+
     const wireTransaction = Uint8Array.from(getTransactionEncoder().encode(transaction));
 
     const result = await signAndSendTransaction({

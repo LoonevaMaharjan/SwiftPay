@@ -5,8 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 type AppUser = { id: string; privy_user_id: string; username: string; email: string | null; wallet_address: string };
 
 function client() {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-  const appSecret = process.env.PRIVY_APP_SECRET; 
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
+  const appSecret = (process.env.PRIVY_APP_SECRET || process.env.privy_app_secret)?.trim(); 
   const configuredJwtVerificationKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim().replace(/\\n/g, '\n');
   // A complete SPKI key overrides Privy's JWKS endpoint. Empty values and
   // copied placeholders fall back to the SDK's built-in JWKS verification.
@@ -48,7 +48,10 @@ export async function verifiedSolanaWallet(request: NextRequest, walletAddress: 
 }
 
 export function apiError(error: unknown, fallback = 'Request failed.') {
-  const message = error instanceof Error ? error.message : fallback;
-  const status = /sign in|session has expired/i.test(message) ? 401 : /not configured|misconfigured|invalid app id or app secret/i.test(message) ? 503 : 400;
+  let message = error instanceof Error ? error.message : fallback;
+  if (/invalid app id or app secret/i.test(message)) {
+    message = 'Server authentication is misconfigured. Please verify PRIVY_APP_SECRET.';
+  }
+  const status = /sign in|session has expired/i.test(message) ? 401 : /not configured|misconfigured/i.test(message) ? 503 : 400;
   return Response.json({ error: message }, { status });
 }
