@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { ArrowUpRight, Menu, ShieldCheck, X } from 'lucide-react';
 
 interface NavbarProps {
@@ -11,19 +10,14 @@ interface NavbarProps {
 }
 
 export function Navbar({ onSignIn }: NavbarProps) {
-  const { login, ready, authenticated } = usePrivy();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleAuthAction = () => {
     if (onSignIn) {
       onSignIn();
-      return;
-    }
-    if (ready && authenticated) {
-      router.push('/dashboard');
-    } else if (ready) {
-      login();
+    } else {
+      router.push('/coming-soon');
     }
   };
 
@@ -72,10 +66,9 @@ export function Navbar({ onSignIn }: NavbarProps) {
           <button
             type="button"
             onClick={handleAuthAction}
-            disabled={!ready}
-            className="text-xs uppercase tracking-wider font-mono font-semibold px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="text-xs uppercase tracking-wider font-mono font-semibold px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            <span>{authenticated ? 'Go to Dashboard' : 'Sign in'}</span>
+            <span>Sign in</span>
             <ArrowUpRight className="size-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -114,10 +107,9 @@ export function Navbar({ onSignIn }: NavbarProps) {
                 setMobileMenuOpen(false);
                 handleAuthAction();
               }}
-              disabled={!ready}
-              className="mt-2 text-xs uppercase tracking-wider font-mono font-semibold px-4 py-2.5 rounded-lg bg-slate-900 text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="mt-2 text-xs uppercase tracking-wider font-mono font-semibold px-4 py-2.5 rounded-lg bg-slate-900 text-white flex items-center justify-center gap-1.5"
             >
-              <span>{authenticated ? 'Go to Dashboard' : 'Sign in'}</span>
+              <span>Sign in</span>
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </button>
           </nav>

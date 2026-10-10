@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface FinalCtaProps {
@@ -9,18 +8,13 @@ interface FinalCtaProps {
 }
 
 export function FinalCta({ onStartSending }: FinalCtaProps) {
-  const { login, ready, authenticated } = usePrivy();
   const router = useRouter();
 
   const handleCta = () => {
     if (onStartSending) {
       onStartSending();
-      return;
-    }
-    if (ready && authenticated) {
-      router.push('/dashboard');
-    } else if (ready) {
-      login();
+    } else {
+      router.push('/coming-soon');
     }
   };
 
@@ -50,10 +44,9 @@ export function FinalCta({ onStartSending }: FinalCtaProps) {
               <button
                 type="button"
                 onClick={handleCta}
-                disabled={!ready}
-                className="group font-sans text-sm font-semibold px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                className="group font-sans text-sm font-semibold px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
-                <span>{authenticated ? 'Go to dashboard' : 'Start sending'}</span>
+                <span>Start sending</span>
                 <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform motion-reduce:transform-none" aria-hidden="true" />
               </button>
             </div>

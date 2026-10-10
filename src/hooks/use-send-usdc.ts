@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { usePrivateWallet } from '@/providers/private-wallet-provider';
+import { formatZolanaError } from '@/lib/zolana-errors';
 
 export type TransferState = 'idle' | 'signing' | 'confirming' | 'success' | 'error';
 
@@ -19,7 +20,7 @@ export function useSendUsdc() {
       setSignature(result.signature); setConfirmationPending(!result.indexed); setState('success');
       return result.signature;
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Could not complete the private payment.';
+      const message = formatZolanaError(cause);
       setError(message); setState('error'); throw cause;
     }
   }, [transfer]);

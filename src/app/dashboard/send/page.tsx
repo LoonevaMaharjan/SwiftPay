@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useWalletAddress } from '@/hooks/use-wallet-address';
 import { useSendUsdc } from '@/hooks/use-send-usdc';
 import { usePrivateWallet } from '@/providers/private-wallet-provider';
+import { formatZolanaError } from '@/lib/zolana-errors';
 
 type Step = 'details' | 'review' | 'complete';
 const truncate = (value: string) => `${value.slice(0, 4)}...${value.slice(-4)}`;
@@ -87,7 +88,7 @@ export default function SendPage() {
       setRecipientUserId(resolved.id);
       setPaymentId(intentData.payment.id);
       setStep('review');
-    } catch (cause) { setFormError(cause instanceof Error ? cause.message : 'Couldn’t prepare this payment.'); }
+    } catch (cause) { setFormError(formatZolanaError(cause)); }
     finally { setPreparing(false); }
   }
 

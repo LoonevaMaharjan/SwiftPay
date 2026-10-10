@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -22,19 +21,14 @@ interface HeroProps {
 }
 
 export function Hero({ onStartSending }: HeroProps) {
-  const { login, ready, authenticated } = usePrivy();
   const router = useRouter();
   const [isShielded, setIsShielded] = useState(true);
 
   const handleCta = () => {
     if (onStartSending) {
       onStartSending();
-      return;
-    }
-    if (ready && authenticated) {
-      router.push('/dashboard');
-    } else if (ready) {
-      login();
+    } else {
+      router.push('/coming-soon');
     }
   };
 
@@ -78,10 +72,9 @@ export function Hero({ onStartSending }: HeroProps) {
               <button
                 type="button"
                 onClick={handleCta}
-                disabled={!ready}
-                className="group font-sans text-sm font-semibold px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="group font-sans text-sm font-semibold px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
-                <span>{authenticated ? 'Go to dashboard' : 'Start sending'}</span>
+                <span>Start sending</span>
                 <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform motion-reduce:transform-none" aria-hidden="true" />
               </button>
 

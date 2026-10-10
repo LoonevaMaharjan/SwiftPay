@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLogin, usePrivy } from '@privy-io/react-auth';
 import { Navbar } from '@/components/landing/navbar';
 import { Hero } from '@/components/landing/hero';
 import { ProblemSection } from '@/components/landing/problem-section';
@@ -14,39 +12,10 @@ import { FinalCta } from '@/components/landing/final-cta';
 import { Footer } from '@/components/landing/footer';
 
 export default function LandingPage() {
-  const { authenticated, ready, getAccessToken } = usePrivy();
   const router = useRouter();
-  const [navigating, setNavigating] = useState(false);
-
-  const navigateToApp = async () => {
-    if (navigating) return;
-    setNavigating(true);
-    try {
-      const token = await getAccessToken();
-      const response = await fetch('/api/profile', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      router.push(response.ok ? '/dashboard' : '/onboarding');
-    } catch {
-      router.push('/onboarding');
-    } finally {
-      setNavigating(false);
-    }
-  };
-
-  const { login } = useLogin({
-    onComplete: () => {
-      void navigateToApp();
-    },
-  });
 
   const handleAuthAction = () => {
-    if (!ready || navigating) return;
-    if (authenticated) {
-      void navigateToApp();
-    } else {
-      login();
-    }
+    router.push('/coming-soon');
   };
 
   return (

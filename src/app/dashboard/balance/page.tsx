@@ -8,6 +8,7 @@ import { useSolBalance } from '@/hooks/use-sol-balance';
 import { useUsdcBalance } from '@/hooks/use-usdc-balance';
 import { useWalletAddress } from '@/hooks/use-wallet-address';
 import { usePrivateWallet } from '@/providers/private-wallet-provider';
+import { formatZolanaError } from '@/lib/zolana-errors';
 
 function toRawAmount(value: string): bigint | null {
   if (!/^\d+(\.\d{1,6})?$/.test(value) || Number(value) <= 0) return null;
@@ -45,7 +46,7 @@ export default function BalancePage() {
       setAmount('');
       await Promise.all([refreshPublic(), refreshPrivate(), refreshSol()]);
     } catch (cause) {
-      setActionError(cause instanceof Error ? cause.message : 'Could not add USDC to your private balance.');
+      setActionError(formatZolanaError(cause));
     } finally { setDepositing(false); }
   }
 

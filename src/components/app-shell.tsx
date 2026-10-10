@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLanding = pathname === '/';
+  const isLanding = pathname === '/' || pathname === '/coming-soon';
 
   if (isLanding) {
     return <div className="min-h-screen w-full bg-[#FAFAFA] text-slate-900">{children}</div>;

@@ -23,6 +23,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import bs58 from 'bs58';
 import { useWalletAddress } from '@/hooks/use-wallet-address';
 import { getConnection, USDC_MINT } from '@/lib/solana';
+import { formatZolanaError } from '@/lib/zolana-errors';
 
 type State = 'disconnected' | 'loading' | 'ready' | 'error';
 type PrivateContextValue = {
@@ -101,7 +102,7 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
       } catch (cause) {
         keysRef.current?.destroy(); keysRef.current = null; walletRef.current = null; clientRef.current = null;
         setState('error');
-        setError(cause instanceof Error ? cause.message : 'Could not open your private wallet.');
+        setError(formatZolanaError(cause));
         throw cause;
       }
     })();
@@ -189,6 +190,11 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
     let slot: bigint | undefined;
     try {
       slot = await clientRef.current.confirmTransaction(toKitSignature(txSignature));
+      try {
+        await clientRef.current.confirmPrivateTransaction(toKitSignature(txSignature));
+      } catch (idxErr) {
+        console.warn('Indexer confirmation timed out during deposit, continuing to sync:', idxErr);
+      }
     } catch {
       const status = await getConnection().getSignatureStatuses([txSignature], { searchTransactionHistory: true }).then((result) => result.value[0]).catch(() => null);
       if (status?.err) throw new Error('Solana rejected this deposit.');
@@ -206,15 +212,31 @@ export function PrivateWalletProvider({ children }: { children: React.ReactNode 
     await register();
     if (!ownerWallet || !clientRef.current || !walletRef.current || !keysRef.current) throw new Error('Could not prepare this payment. Please try again.');
     if (getPrivateUsdcAmount(walletRef.current) < amount) throw new Error('Your private USDC balance is too low. Deposit USDC into your private wallet first.');
-    const transaction = await buildTransferTransaction({
-      client: clientRef.current,
-      wallet: walletRef.current,
-      keys: keysRef.current,
-      feePayer: address(ownerWallet.address),
-      recipient: address(recipient),
-      asset: USDC_ADDRESS,
-      amount,
-    });
+    await refresh();
+    let transaction: Transaction;
+    try {
+      transaction = await buildTransferTransaction({
+        client: clientRef.current,
+        wallet: walletRef.current,
+        keys: keysRef.current,
+        feePayer: address(ownerWallet.address),
+        recipient: address(recipient),
+        asset: USDC_ADDRESS,
+        amount,
+      });
+    } catch (firstErr) {
+      console.warn('Initial transfer build failed, retrying after re-sync:', firstErr);
+      await refresh();
+      transaction = await buildTransferTransaction({
+        client: clientRef.current,
+        wallet: walletRef.current,
+        keys: keysRef.current,
+        feePayer: address(ownerWallet.address),
+        recipient: address(recipient),
+        asset: USDC_ADDRESS,
+        amount,
+      });
+    }
     const txSignature = await submit(transaction);
     let chainConfirmed = false;
     try {
