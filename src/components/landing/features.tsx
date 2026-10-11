@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   AtSign,
   History,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 
 export function Features() {
+  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const featureList = [
     {
       title: 'Embedded wallet',
@@ -52,9 +54,9 @@ export function Features() {
             Features
           </div>
           <h2 className="font-sans font-extrabold text-3xl sm:text-4xl text-slate-900 tracking-tight leading-tight">
-            Everything you need to move money.{' '}
+            Move money simply.{' '}
             <span className="text-emerald-600">
-              Nothing you don&apos;t.
+              Keep the details private.
             </span>
           </h2>
           <p className="mt-3 font-sans text-base text-slate-600 leading-relaxed">
@@ -63,13 +65,23 @@ export function Features() {
         </div>
 
         {/* 6 Clean Cards */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featureList.map((item) => {
+        <div className="feature-grid mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {featureList.map((item, index) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.title}
-                className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-slate-300 transition-colors"
+                onMouseEnter={() => setHoveredFeature(index)}
+                onMouseLeave={() => setHoveredFeature(null)}
+                style={{
+                  transform: hoveredFeature === index
+                    ? 'translate3d(0, -3px, 0) scale(1.1)'
+                    : hoveredFeature !== null
+                      ? 'scale(0.97)'
+                      : undefined,
+                  zIndex: hoveredFeature === index ? 10 : undefined,
+                }}
+                className="feature-card relative rounded-2xl border border-slate-300 bg-white p-6 shadow-sm transition-[transform,border-color,box-shadow] duration-200 ease-out hover:border-emerald-500 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.5),0_12px_30px_rgba(16,185,129,0.2)] motion-reduce:transition-none"
               >
                 <div className="size-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4">
                   <Icon className="size-5" aria-hidden="true" />

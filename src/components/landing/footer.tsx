@@ -24,14 +24,14 @@ export function Footer() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="inline-flex items-center gap-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               aria-label="SwiftPay home"
             >
-              <span className="flex items-center gap-2">
-                <Image src="/swiftpay-circle.png" alt="" width={30} height={30} className="size-[30px] rounded-full object-contain" />
-                <Image src="/swiftpay-logo.png" alt="SwiftPay" width={105} height={34} className="h-[34px] w-[105px] object-contain" />
+              <span className="flex items-center gap-0">
+                <Image src="/swiftpay-circle-bg.png" alt="" width={36} height={36} className="size-9 shrink-0 rounded-full object-contain" />
+                <Image src="/swiftpay-logo.png" alt="SwiftPay" width={105} height={34} className="-ml-[31px] h-[34px] w-[105px] object-contain" />
               </span>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="-ml-5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
                 Devnet Beta
               </span>
             </Link>

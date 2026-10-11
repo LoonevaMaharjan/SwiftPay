@@ -1,30 +1,29 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, ShieldCheck, Rocket } from 'lucide-react';
 
 export default function ComingSoonPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80">
+      <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-900/95 text-white backdrop-blur-md">
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+            className="group flex items-center gap-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             aria-label="SwiftPay home"
           >
-            <span className="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-sans font-bold text-sm shadow-sm group-hover:bg-emerald-700 transition-colors">
-              <ShieldCheck className="size-4.5 text-white" aria-hidden="true" />
-            </span>
-            <span className="font-sans font-bold text-xl tracking-tight text-slate-900">
-              SwiftPay
+            <span className="flex items-center gap-0">
+              <Image src="/swiftpay-circle-bg.png" alt="" width={40} height={40} priority className="size-10 shrink-0 rounded-full object-contain" />
+              <Image src="/swiftpay-logo.png" alt="SwiftPay" width={112} height={36} priority className="-ml-8 h-9 w-28 object-contain" />
             </span>
           </Link>
 
           <Link
             href="/"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+            className="flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             <ArrowLeft className="size-4" />
             Back to home
