@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUp, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowUp } from 'lucide-react';
 
 export function Footer() {
   const scrollToTop = () => {
@@ -23,14 +24,12 @@ export function Footer() {
           <div>
             <Link
               href="/"
-              className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
+              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               aria-label="SwiftPay home"
             >
-              <span className="size-7 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center font-sans font-bold text-xs">
-                <ShieldCheck className="size-4" />
-              </span>
-              <span className="font-sans font-bold text-lg text-white">
-                SwiftPay
+              <span className="flex items-center gap-2">
+                <Image src="/swiftpay-circle.png" alt="" width={30} height={30} className="size-[30px] rounded-full object-contain" />
+                <Image src="/swiftpay-logo.png" alt="SwiftPay" width={105} height={34} className="h-[34px] w-[105px] object-contain" />
               </span>
               <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Devnet Beta

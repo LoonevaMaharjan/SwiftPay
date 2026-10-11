@@ -7,12 +7,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isLanding = pathname === '/' || pathname === '/coming-soon';
 
   if (isLanding) {
-    return <div className="min-h-screen w-full bg-[#FAFAFA] text-slate-900">{children}</div>;
+    return <div className="min-h-screen w-full bg-background text-foreground">{children}</div>;
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-shell-background p-4 sm:p-8 overflow-hidden">
-      <div className="h-[calc(100dvh-2rem)] w-full max-w-lg max-h-[48rem] overflow-y-auto rounded-xl border border-border bg-card shadow-md sm:h-[calc(100dvh-4rem)]">
+    <div className="min-h-dvh w-full overflow-x-hidden bg-shell-background sm:flex sm:justify-center sm:px-8 sm:py-8">
+      <div className="min-h-dvh w-full max-w-lg bg-card sm:min-h-[calc(100dvh-4rem)] sm:rounded-xl sm:border sm:border-border sm:shadow-md">
         {children}
       </div>
     </div>

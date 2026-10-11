@@ -8,8 +8,8 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     const sender = await requireAppUser(request);
-    const body = await request.json() as { receiver_user_id?: string; amount?: string; signature?: string; payment_id?: string };
-    const { receiver_user_id, amount, signature, payment_id } = body;
+    const body = await request.json() as { receiver_user_id?: string; amount?: string; signature?: string; payment_id?: string; payment_request_id?: string | null };
+    const { receiver_user_id, amount, signature, payment_id, payment_request_id } = body;
     if (!receiver_user_id || !amount || !signature || !/^\d+(?:\.\d{1,6})?$/.test(amount) || Number(amount) <= 0) {
       return NextResponse.json({ error: 'Recipient, valid USDC amount, and transaction signature are required.' }, { status: 400 });
     }
@@ -18,6 +18,24 @@ export async function POST(request: NextRequest) {
       .select('id, wallet_address').eq('id', receiver_user_id).maybeSingle();
     if (receiverError || !receiver || receiver.id === sender.id) {
       return NextResponse.json({ error: 'Payment recipient not found.' }, { status: 404 });
+    }
+    if (payment_request_id) {
+      const { data: paymentRequest, error: requestError } = await supabaseAdmin.from('payment_requests')
+        .select('id, requester_user_id, payer_user_id, amount, status, transaction_signature')
+        .eq('id', payment_request_id).maybeSingle();
+      if (requestError || !paymentRequest) return NextResponse.json({ error: 'Payment request not found.' }, { status: 404 });
+      if (paymentRequest.payer_user_id !== sender.id || paymentRequest.requester_user_id !== receiver.id || Number(paymentRequest.amount) !== Number(amount)) {
+        return NextResponse.json({ error: 'This transaction does not match the payment request.' }, { status: 409 });
+      }
+      if (paymentRequest.transaction_signature && paymentRequest.transaction_signature !== signature) {
+        return NextResponse.json({ error: 'This payment request already has a transaction in progress.' }, { status: 409 });
+      }
+      if (!['pending', 'processing', 'paid'].includes(paymentRequest.status)) {
+        return NextResponse.json({ error: 'This payment request is no longer available.' }, { status: 409 });
+      }
+      if (paymentRequest.status === 'paid' && paymentRequest.transaction_signature !== signature) {
+        return NextResponse.json({ error: 'This payment request has already been paid.' }, { status: 409 });
+      }
     }
     const { data: existing, error: existingError } = await supabaseAdmin.from('payments')
       .select('id, sender_user_id, receiver_user_id, amount, status')
@@ -53,6 +71,14 @@ export async function POST(request: NextRequest) {
     }
 
     const verification = await verifyPrivatePayment(signature, sender.wallet_address);
+    if (payment_request_id) {
+      const { error: requestUpdateError } = await supabaseAdmin.from('payment_requests').update({
+        status: 'processing',
+        transaction_signature: signature,
+        updated_at: new Date().toISOString(),
+      }).eq('id', payment_request_id).in('status', ['pending', 'processing']);
+      if (requestUpdateError) throw new Error('The payment was submitted, but SwiftPay could not update the request status. Retry the history update.');
+    }
     if (!verification.confirmed) {
       if (payment_id) return NextResponse.json({ status: 'submitted', pendingVerification: true }, { status: 202 });
       return NextResponse.json({ error: 'Helius has not confirmed this private payment yet. Retry shortly.' }, { status: 409 });

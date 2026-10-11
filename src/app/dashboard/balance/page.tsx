@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Copy, ExternalLink, LoaderCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Check, Copy, ExternalLink, LoaderCircle, RefreshCw, ShieldCheck, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSolBalance } from '@/hooks/use-sol-balance';
@@ -63,25 +63,26 @@ export default function BalancePage() {
 
   if (!ready || !address) return <div className="max-w-3xl space-y-4"><div className="h-8 w-48 animate-pulse rounded bg-muted" /><div className="h-64 animate-pulse rounded-xl bg-muted" /></div>;
 
-  return <div className="mx-auto max-w-3xl space-y-6">
-    <header className="flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-3xl font-semibold tracking-tight">Balance</h1><p className="mt-2 text-sm text-muted-foreground">Manage private USDC, public USDC, and SOL for network fees.</p></div>
-      <Button variant="outline" onClick={refreshAll}><RefreshCw className="size-4" />Refresh balances</Button>
+  return <div className="mx-auto max-w-4xl space-y-6 pb-8">
+    <header className="flex flex-wrap items-end justify-between gap-4">
+      <div><p className="text-sm font-medium text-primary">Wallet</p><h1 className="mt-1 text-3xl font-semibold tracking-tight">Your balances</h1><p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">See what’s available and keep a little SOL ready for network fees.</p></div>
+      <Button variant="outline" className="rounded-xl" onClick={refreshAll}><RefreshCw className="size-4" />Refresh balances</Button>
     </header>
 
     <div className="grid gap-4 sm:grid-cols-2">
-      <Card className="border-primary/20 bg-primary/[0.035] sm:col-span-2">
-        <CardHeader><CardTitle>Private USDC</CardTitle><CardDescription>Funds here are available for SwiftPay private payments.</CardDescription></CardHeader>
-        <CardContent className="flex flex-wrap items-end justify-between gap-4">
-          <p className="font-mono text-4xl font-semibold tabular-nums">{privateUsdc === null ? (state === 'loading' ? 'Loading…' : '—') : `${privateUsdc.toFixed(6)} USDC`}</p>
-          {privateUsdc === null && <Button variant="outline" onClick={() => void initialize().catch(() => undefined)}><RefreshCw className="size-4"/>Load private balance</Button>}
+      <Card className="relative overflow-hidden rounded-3xl border-primary/15 bg-brand-bg shadow-none sm:col-span-2">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-24 size-64 rounded-full border border-primary/15" />
+        <CardHeader className="relative pb-2"><div className="flex items-start justify-between gap-4"><div><div className="flex items-center gap-2 text-sm font-medium text-primary"><WalletCards className="size-4" aria-hidden="true" /> Private balance</div><CardTitle className="mt-4 font-mono text-4xl tracking-tight tabular-nums sm:text-5xl">{privateUsdc === null ? (state === 'loading' ? 'Loading…' : '—') : privateUsdc.toFixed(6)} <span className="text-xl font-medium text-muted-foreground">USDC</span></CardTitle></div><span className="rounded-full border border-primary/15 bg-card/80 px-3 py-1.5 text-xs font-medium text-primary">SwiftPay wallet</span></div></CardHeader>
+        <CardContent className="relative flex flex-wrap items-center justify-between gap-3 pt-3">
+          <p className="text-sm text-muted-foreground">Funds available for SwiftPay private payments.</p>
+          {privateUsdc === null && <Button variant="outline" className="rounded-xl bg-card" onClick={() => void initialize().catch(() => undefined)}><RefreshCw className="size-4"/>Load balance</Button>}
           {walletError && <p className="w-full text-sm text-destructive" role="alert">{walletError}</p>}
         </CardContent>
       </Card>
-      <Card><CardHeader><CardTitle>Public USDC</CardTitle><CardDescription>USDC in your wallet that can be deposited privately.</CardDescription></CardHeader><CardContent><p className="font-mono text-2xl font-semibold tabular-nums">{publicLoading ? 'Loading…' : publicError ? 'Unavailable' : `${(publicUsdc ?? 0).toFixed(6)} USDC`}</p>{publicError && <p className="mt-2 text-xs text-destructive">Could not load public USDC. Refresh and try again.</p>}</CardContent></Card>
-      <Card>
+      <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Public USDC</CardTitle><CardDescription>USDC in your connected wallet.</CardDescription></CardHeader><CardContent><p className="font-mono text-2xl font-semibold tabular-nums">{publicLoading ? 'Loading…' : publicError ? 'Unavailable' : `${(publicUsdc ?? 0).toFixed(6)} USDC`}</p>{publicError && <p className="mt-2 text-xs text-destructive">Could not load public USDC. Refresh and try again.</p>}</CardContent></Card>
+      <Card className="rounded-2xl">
         <CardHeader>
-          <CardTitle>SOL for fees</CardTitle>
+          <CardTitle className="text-base">SOL for fees</CardTitle>
           <CardDescription>SOL pays Solana network fees for deposits and private transfers.</CardDescription>
         </CardHeader>
         <CardContent>

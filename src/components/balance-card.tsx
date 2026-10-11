@@ -33,11 +33,14 @@ export function BalanceCard() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">Balance</CardTitle>
+    <Card className="rounded-2xl border-primary/15">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-sm font-semibold">USDC balance</CardTitle>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">SwiftPay</span>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         {loading || !ready ? (
           <Skeleton className="h-9 w-40" />
         ) : error ? (
@@ -48,7 +51,7 @@ export function BalanceCard() {
         ) : !address ? (
           <div className="space-y-1"><p className="text-sm font-medium">Wallet unavailable</p><p className="text-xs text-muted-foreground">Refresh to retry wallet creation.</p></div>
         ) : (
-          <div><p className="font-mono text-3xl font-semibold tabular-nums">{privateUsdc?.toFixed(6) ?? (privateWalletState === 'loading' ? 'Loading…' : '—')} USDC</p><p className="mt-1 text-xs text-muted-foreground">USDC available for SwiftPay payments.</p><p className="mt-3 text-xs text-muted-foreground">Public USDC available to add: {balance?.toFixed(2) ?? '0.00'} USDC</p>{privateWalletError && <div className="mt-2 flex items-center gap-2"><p className="text-xs text-destructive">Private balance is temporarily unavailable.</p><Button variant="link" size="sm" className="h-auto px-0 py-0 text-xs" onClick={() => void initialize().catch(() => undefined)}>Retry</Button></div>}</div>
+          <div><p className="text-xs text-muted-foreground">Private balance</p><p className="mt-1 font-mono text-3xl font-semibold tracking-tight tabular-nums">{privateUsdc?.toFixed(6) ?? (privateWalletState === 'loading' ? 'Loading…' : '—')} <span className="text-base font-medium text-muted-foreground">USDC</span></p><div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/60 px-3 py-2.5"><span className="text-xs text-muted-foreground">Public USDC</span><span className="font-mono text-xs font-medium tabular-nums">{balance?.toFixed(2) ?? '0.00'} USDC</span></div>{privateWalletError && <div className="mt-2 flex items-center gap-2"><p className="text-xs text-destructive">Private balance is temporarily unavailable.</p><Button variant="link" size="sm" className="h-auto px-0 py-0 text-xs" onClick={() => void initialize().catch(() => undefined)}>Retry</Button></div>}</div>
         )}
         {address && (
           <div className="mt-3 rounded-lg border border-border/70 bg-muted/40 px-3 py-2.5">

@@ -13,7 +13,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         loginMethods: ['google'],
         appearance: {
           theme: 'light',
-          accentColor: '#171717',
+          accentColor: '#059669',
         },
         embeddedWallets: {
           solana: {

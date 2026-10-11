@@ -1,10 +1,23 @@
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
+import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } from '@solana/spl-token';
 
 export const USDC_MINT = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
 
 export function getConnection() {
   return new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('devnet'), 'confirmed');
+}
+
+export async function estimateBaseSolFee(payerAddress: string, recipientAddress: string): Promise<number> {
+  const connection = getConnection();
+  const payer = new PublicKey(payerAddress);
+  const recipient = new PublicKey(recipientAddress);
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+  const message = new Transaction({ feePayer: payer, recentBlockhash: blockhash })
+    .add(SystemProgram.transfer({ fromPubkey: payer, toPubkey: recipient, lamports: 1 }))
+    .compileMessage();
+  const fee = await connection.getFeeForMessage(message, 'confirmed');
+  if (fee === null) throw new Error('Solana could not estimate the transaction fee.');
+  return fee / LAMPORTS_PER_SOL;
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs = 15_000): Promise<T> {

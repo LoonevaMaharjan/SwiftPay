@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Menu, ShieldCheck, X } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowUpRight, Menu, X } from 'lucide-react';
 
 interface NavbarProps {
   onSignIn?: () => void;
@@ -34,14 +35,16 @@ export function Navbar({ onSignIn }: NavbarProps) {
         {/* Brand Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+          className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           aria-label="SwiftPay home"
         >
-          <span className="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-sans font-bold text-sm shadow-sm group-hover:bg-emerald-700 transition-colors">
-            <ShieldCheck className="size-4.5 text-white" aria-hidden="true" />
-          </span>
-          <span className="font-sans font-bold text-xl tracking-tight text-slate-900">
-            SwiftPay
+          <span className="flex items-center gap-2">
+            <span className="grid size-[34px] shrink-0 place-items-center rounded-full bg-black/40">
+              <Image src="/swiftpay-circle.png" alt="" width={34} height={34} priority className="size-[34px] rounded-full object-contain" />
+            </span>
+            <span className="rounded-md bg-black/40 px-1.5 py-0.5">
+              <Image src="/swiftpay-logo.png" alt="SwiftPay" width={112} height={36} priority className="h-9 w-28 object-contain" />
+            </span>
           </span>
           <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 hidden sm:inline-block">
             Devnet Beta
