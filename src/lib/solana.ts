@@ -16,7 +16,11 @@ export async function estimateBaseSolFee(payerAddress: string, recipientAddress:
     .add(SystemProgram.transfer({ fromPubkey: payer, toPubkey: recipient, lamports: 1 }))
     .compileMessage();
   const fee = await connection.getFeeForMessage(message, 'confirmed');
-  if (fee === null) throw new Error('Solana could not estimate the transaction fee.');
+
+  if (fee === null || typeof fee !== 'number') {
+    throw new Error('Solana could not estimate the transaction fee.');
+  }
+
   return fee / LAMPORTS_PER_SOL;
 }
 
