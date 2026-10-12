@@ -40,6 +40,12 @@ The public landing page currently routes its sign-in and start-sending actions t
 
 5. Open [http://localhost:3000](http://localhost:3000).
 
+## Hosting
+
+Deploy the repository with a host that supports Next.js and Node.js 24 or later. Add the variables listed above in the host's project environment-variable settings; `.env.local` is for local development and should not be uploaded or committed. Add browser configuration variables with the `NEXT_PUBLIC_` prefix to the production environment as needed, and keep server secrets server-only. Redeploy after changing environment variables.
+
+Before hosting for real users, configure production credentials and apply the Supabase migrations to the production database. The current app configuration and USDC mint are for Devnet; this is not a mainnet deployment guide.
+
 ## Environment variables
 
 | Variable | Purpose |
